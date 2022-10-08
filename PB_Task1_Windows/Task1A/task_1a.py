@@ -33,7 +33,24 @@ import numpy as np
 ##############################################################
 
 ################# ADD UTILITY FUNCTIONS HERE #################
-
+def label_nodes(centre_point):
+	s=''
+	if(centre_point[0]==100):
+			s=s+'A'
+	elif(centre_point[0]==200):
+			s=s+'B'
+	elif(centre_point[0]==300):
+			s=s+'C'
+	elif(centre_point[0]==400):
+			s=s+'D'
+	elif(centre_point[0]==500):
+			s=s+'E'
+	elif(centre_point[0]==600):
+			s=s+'F'
+	else:
+			s=s+'G'
+	s=s+str(int(centre_point[1]/100))
+	return s
 
 
 
@@ -64,7 +81,35 @@ def detect_traffic_signals(maze_image):
 	traffic_signals = []
 
 	##############	ADD YOUR CODE HERE	##############
-	
+	#Converting the image into HSV
+	hsv = cv2.cvtColor(maze_image,cv2.COLOR_BGR2HSV)
+ 
+	#Defining the range of Red color
+	red_lower=np.array([0,70,50])
+	red_upper=np.array([10,255,255])
+ 
+ 	#Creating the mask
+	mask = cv2.inRange(hsv, red_lower, red_upper)
+
+ 	#Detecting the red color
+	res = cv2.bitwise_and(maze_image, maze_image, mask=mask)
+ 
+	# using a findContours() function
+	contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+ 
+	i = 0
+	# Putting Values into list
+	for contour in contours:
+  
+        # finding center point of shape
+		M = cv2.moments(contour)
+		t=()
+		if M['m00'] != 0.0:
+			x = int(M['m10']/M['m00'])
+			y = int(M['m01']/M['m00'])
+			t=(x,y)
+		traffic_signals.append(label_nodes(t))
+	traffic_signals.sort()
 	##################################################
 	
 	return traffic_signals
@@ -199,7 +244,7 @@ def detect_arena_parameters(maze_image):
 	arena_parameters = {}
 
 	##############	ADD YOUR CODE HERE	##############
-	
+	arena_parameters={'traffic_signals':detect_traffic_signals(maze_image), 'horizontal_roads_under_construction':detect_horizontal_roads_under_construction(maze_image), 'vertical_roads_under_construction':detect_vertical_roads_under_construction(maze_image),'medicine_packages_present':detect_medicine_packages(maze_image)}
 	##################################################
 	
 	return arena_parameters
