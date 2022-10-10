@@ -28,6 +28,7 @@
 ## You have to implement this task with the three available ##
 ## modules for this task (numpy, opencv)                    ##
 ##############################################################
+from re import S
 import cv2
 import numpy as np
 ##############################################################
@@ -52,6 +53,21 @@ def label_nodes(centre_point):
 	s=s+str(int(centre_point[1]/100))
 	return s
 
+def get_shop(centre_point):
+    s='Shop_'
+    if((centre_point[0]>100) & (centre_point[0]<200)):
+        s=s+'1'
+    elif((centre_point[0]>200) & (centre_point[0]<300)):
+        s=s+'2'
+    elif((centre_point[0]>300) & (centre_point[0]<400)):
+        s=s+'3'
+    elif((centre_point[0]>400) & (centre_point[0]<500)):
+        s=s+'4'
+    elif((centre_point[0]>500) & (centre_point[0]<600)):
+        s=s+'5'
+    elif((centre_point[0]>600) & (centre_point[0]<700)):
+        s=s+'6'
+    return s
 
 
 
@@ -97,7 +113,6 @@ def detect_traffic_signals(maze_image):
 	# using a findContours() function
 	contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
  
-	i = 0
 	# Putting Values into list
 	for contour in contours:
   
@@ -207,7 +222,75 @@ def detect_medicine_packages(maze_image):
 	medicine_packages = []
 
 	##############	ADD YOUR CODE HERE	##############
+	# Converting into Grayscale
+	gray = cv2.cvtColor(maze_image, cv2.COLOR_BGR2GRAY)
+ 
+	# getting only shapes and setting threshold of gray image
+	_, with_shapes = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
+	_, without_shapes = cv2.threshold(gray, 90, 255, cv2.THRESH_BINARY)
+	only_shapes = cv2.bitwise_xor(with_shapes,without_shapes)
+	cv2.imshow('Only Shapes',only_shapes)
 
+	# using a findContours() function
+	contours, _ = cv2.findContours(only_shapes, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	
+	# here we are ignoring first coutours because
+	# findcontour function detects whole image as shape
+	contours =  contours[1:]
+	
+	# Putting Values into list
+	for contour in contours:   
+		
+		# Ignoring the extra contours
+		area = cv2.contourArea(contour)
+		if area < 200:
+			continue
+
+		# finding Shape
+		approx = cv2.approxPolyDP(contour, 0.03 * cv2.arcLength(contour, True), True)
+		
+		# if the shape is a triangle, it will have 3 vertices
+		if (len(approx) == 3):
+			shape = 'Triangle'
+
+		# if the shape has 4 vertices, it is a square
+		elif (len(approx) == 4):
+			shape = 'Square'
+
+		# otherwise, we assume the shape is a circle
+		else:
+			shape = 'Circle'
+   
+		# finding center point of shape
+		M = cv2.moments(contour)
+		t=()
+		if M['m00'] != 0.0:
+			x = int(M['m10']/M['m00'])
+			y = int(M['m01']/M['m00'])
+		t=(x,y)
+  
+		# finding color
+		b, g, r= maze_image[x, y]
+		
+		# for sky blue 
+		if ((b>250) & (g>250) & (r<105)):
+			color="Skyblue"
+		# for pink 
+		elif ((b<150) & (g<200) & (r>250)):
+			color="Pink"
+		# for orange
+		elif ((b<5) & (g>105) & (g<195) & (r>250)):
+			color="Orange"
+		# for green 
+		elif ((b<5) & (g>250) & (r<5)):
+			color="Green"
+
+		# finding shop number
+		shop=get_shop(t)
+
+		# Add to list
+		medicine_packages.append([shop,color,shape,t])
+	medicine_packages.sort()
 	##################################################
 
 	return medicine_packages
