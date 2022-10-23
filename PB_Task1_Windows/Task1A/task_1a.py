@@ -36,19 +36,19 @@ import numpy as np
 ################# ADD UTILITY FUNCTIONS HERE #################
 def label_nodes(centre_point):
 	s=''
-	if(centre_point[0]==100):
+	if( (centre_point[0]==100)  |  ((centre_point[0]>90)&(centre_point[0]<110)) ):
 			s=s+'A'
-	elif(centre_point[0]==200):
+	elif( (centre_point[0]==200)  |  ((centre_point[0]>190)&(centre_point[0]<210)) ):
 			s=s+'B'
-	elif(centre_point[0]==300):
+	elif( (centre_point[0]==300)  |  ((centre_point[0]>290)&(centre_point[0]<310)) ):
 			s=s+'C'
-	elif(centre_point[0]==400):
+	elif( (centre_point[0]==400)  |  ((centre_point[0]>390)&(centre_point[0]<410)) ):
 			s=s+'D'
-	elif(centre_point[0]==500):
+	elif( (centre_point[0]==500)  |  ((centre_point[0]>490)&(centre_point[0]<510)) ):
 			s=s+'E'
-	elif(centre_point[0]==600):
+	elif( (centre_point[0]==600)  |  ((centre_point[0]>590)&(centre_point[0]<610)) ):
 			s=s+'F'
-	else:
+	elif( (centre_point[0]==700)  |  ((centre_point[0]>690)&(centre_point[0]<710)) ):
 			s=s+'G'
 	s=s+str(int(centre_point[1]/100))
 	return s
@@ -69,6 +69,78 @@ def get_shop(centre_point):
         s=s+'6'
     return s
 
+def break_down(Lines):
+    for l in Lines:
+        if(l[1]-l[0]>120):
+            a=l[0]+100;
+            Lines.append((l[0],a))
+            while(a+84<l[1]):
+                Lines.append((a,a+100))
+                a=a+100
+            Lines.remove(l)
+    return Lines
+    
+def label_missing_vertical_lines(Lines):
+    ans=[]
+    for line,gap in Lines.items():
+        for g in gap:
+            s1=label_nodes((line,g[0]+10))
+            s2=label_nodes((line,g[1]+10))
+            s=s1+'-'+s2
+            ans.append(s)
+    return ans
+    
+def  label_missing_horizontal_lines(Lines):
+    ans=[]
+    for line,gap in Lines.items():
+        for g in gap:
+            s1=label_nodes((g[0],line))
+            s2=label_nodes((g[1],line))
+            s=s1+'-'+s2
+            ans.append(s)
+    return ans
+            
+    
+def get_road_points_horizontal(Lines):
+    ans=[]
+    for line,gap in Lines.items():
+        gap.sort()
+        l=[]
+        i=gap[0][0]
+        prev=gap[0][1]
+        gapc=gap[1:]
+        for p in gapc:
+            l.append((prev,p[0]))
+            prev=p[1]
+        if(i>150):
+            l.append((96,i))
+        if(prev<650):
+            l.append((prev,708))
+        Lines[line]=break_down(l)
+    ans=label_missing_horizontal_lines(Lines)
+    ans.sort()
+    return ans
+    
+    
+def get_road_points_vertical(Lines):
+    ans=[]
+    for line,gap in Lines.items():
+        gap.sort()
+        l=[]
+        i=gap[0][0]
+        prev=gap[0][1]
+        gapc=gap[1:]
+        for p in gapc:
+            l.append((prev,p[0]))
+            prev=p[1]
+        if(i>150):
+            l.append((96,i))
+        if(prev<650):
+            l.append((prev,708))
+        Lines[line]=break_down(l)
+    ans=label_missing_vertical_lines(Lines)
+    ans.sort()
+    return ans
 
 
 ##############################################################
@@ -154,7 +226,21 @@ def detect_horizontal_roads_under_construction(maze_image):
 	horizontal_roads_under_construction = []
 
 	##############	ADD YOUR CODE HERE	##############
-	
+	#  Convert image to grayscale
+	gray = cv2.cvtColor(maze_image,cv2.COLOR_BGR2GRAY)
+	thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+ 
+	# Detect horizontal lines
+	horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (40,1))
+	detect_horizontal = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
+	cnts = cv2.findContours(detect_horizontal, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+	sets_of_lines={}
+	for c in cnts:
+		if(cv2.arcLength(c, True)<1200):
+			sets_of_lines.setdefault(c[0][0][1], [])
+			sets_of_lines[c[0][0][1]].append((c[0][0][0],c[3][0][0]))
+	horizontal_roads_under_construction=get_road_points_horizontal(sets_of_lines)
 	##################################################
 	
 	return horizontal_roads_under_construction	
@@ -183,7 +269,21 @@ def detect_vertical_roads_under_construction(maze_image):
 	vertical_roads_under_construction = []
 
 	##############	ADD YOUR CODE HERE	##############
-	
+	#  Convert image to grayscale
+	gray = cv2.cvtColor(maze_image,cv2.COLOR_BGR2GRAY)
+	thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+ 
+	# Detect vertical lines
+	vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,20))
+	detect_vertical = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, vertical_kernel, iterations=2)
+	cnts = cv2.findContours(detect_vertical, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+	sets_of_lines={}
+	for c in cnts:
+		if(cv2.arcLength(c, True)<1200):
+			sets_of_lines.setdefault(c[0][0][0], [])
+			sets_of_lines[c[0][0][0]].append((c[0][0][1],c[1][0][1]))
+	vertical_roads_under_construction=get_road_points_vertical(sets_of_lines)
 	##################################################
 	
 	return vertical_roads_under_construction
@@ -229,7 +329,6 @@ def detect_medicine_packages(maze_image):
 	_, with_shapes = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)
 	_, without_shapes = cv2.threshold(gray, 90, 255, cv2.THRESH_BINARY)
 	only_shapes = cv2.bitwise_xor(with_shapes,without_shapes)
-	cv2.imshow('Only Shapes',only_shapes)
 
 	# using a findContours() function
 	contours, _ = cv2.findContours(only_shapes, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -271,7 +370,8 @@ def detect_medicine_packages(maze_image):
   
 		# finding color
 		b, g, r= maze_image[x, y]
-		
+		color = ""
+
 		# for sky blue 
 		if ((b>250) & (g>250) & (r<105)):
 			color="Skyblue"
