@@ -15,12 +15,13 @@
 *****************************************************************************************
 '''
 
-# Team ID:			[ Team-ID ]
-# Author List:		[ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
+# Team ID:			eYRC#PB#1761
+# Author List:		
 # Filename:			task_1a.py
 # Functions:		detect_traffic_signals, detect_horizontal_roads_under_construction, detect_vertical_roads_under_construction,
 #					detect_medicine_packages, detect_arena_parameters
-# 					[ Comma separated list of functions in this file ]
+# 					label_nodes, get_shop, break_down, label_missing_vertical_lines, label_missing_horizontal_lines, 
+# 					get_road_points_horizontal, get_road_points_vertical
 
 
 ####################### IMPORT MODULES #######################
@@ -35,73 +36,193 @@ import numpy as np
 
 ################# ADD UTILITY FUNCTIONS HERE #################
 def label_nodes(centre_point):
-	s=''
+
+	"""
+	Purpose:
+	---
+	This function takes the coordinates of a node as an argument and returns a string
+	which is the label of the node present in the image
+
+	Input Arguments:
+	---
+	`centre_point` :	[ tuple ]
+			tuple containing x and y coordinate of the node
+	Returns:
+	---
+	`label` : [ string ]
+			string containing label of the node
+	
+	Example call:
+	---
+	traffic_signals.append(label_nodes(t))
+	"""
+	label=''
 	if( (centre_point[0]==100)  |  ((centre_point[0]>90)&(centre_point[0]<110)) ):
-			s=s+'A'
+			label=label+'A'
 	elif( (centre_point[0]==200)  |  ((centre_point[0]>190)&(centre_point[0]<210)) ):
-			s=s+'B'
+			label=label+'B'
 	elif( (centre_point[0]==300)  |  ((centre_point[0]>290)&(centre_point[0]<310)) ):
-			s=s+'C'
+			label=label+'C'
 	elif( (centre_point[0]==400)  |  ((centre_point[0]>390)&(centre_point[0]<410)) ):
-			s=s+'D'
+			label=label+'D'
 	elif( (centre_point[0]==500)  |  ((centre_point[0]>490)&(centre_point[0]<510)) ):
-			s=s+'E'
+			label=label+'E'
 	elif( (centre_point[0]==600)  |  ((centre_point[0]>590)&(centre_point[0]<610)) ):
-			s=s+'F'
+			label=label+'F'
 	elif( (centre_point[0]==700)  |  ((centre_point[0]>690)&(centre_point[0]<710)) ):
-			s=s+'G'
-	s=s+str(int(centre_point[1]/100))
-	return s
+			label=label+'G'
+	label=label+str(int(centre_point[1]/100))
+	return label
 
 def get_shop(centre_point):
-    s='Shop_'
-    if((centre_point[0]>100) & (centre_point[0]<200)):
-        s=s+'1'
-    elif((centre_point[0]>200) & (centre_point[0]<300)):
-        s=s+'2'
-    elif((centre_point[0]>300) & (centre_point[0]<400)):
-        s=s+'3'
-    elif((centre_point[0]>400) & (centre_point[0]<500)):
-        s=s+'4'
-    elif((centre_point[0]>500) & (centre_point[0]<600)):
-        s=s+'5'
-    elif((centre_point[0]>600) & (centre_point[0]<700)):
-        s=s+'6'
-    return s
+    
+    """
+	Purpose:
+	---
+	This function takes the coordinates of a point as an argument and returns a string
+	which is shop in which it is present in the image
 
-def break_down(Lines):
-    for l in Lines:
+	Input Arguments:
+	---
+	`centre_point` :	[ tuple ]
+			tuple containing x and y coordinate of the point
+	Returns:
+	---
+	`shop` : [ string ]
+			string containing shop in which the point is present
+	
+	Example call:
+	---
+	shop=get_shop(t)
+	"""
+    shop='Shop_'
+    if((centre_point[0]>100) & (centre_point[0]<200)):
+        shop=shop+'1'
+    elif((centre_point[0]>200) & (centre_point[0]<300)):
+        shop=shop+'2'
+    elif((centre_point[0]>300) & (centre_point[0]<400)):
+        shop=shop+'3'
+    elif((centre_point[0]>400) & (centre_point[0]<500)):
+        shop=shop+'4'
+    elif((centre_point[0]>500) & (centre_point[0]<600)):
+        shop=shop+'5'
+    elif((centre_point[0]>600) & (centre_point[0]<700)):
+        shop=shop+'6'
+    return shop
+
+def break_down(Gaps):
+    
+    """
+	Purpose:
+	---
+	This function takes the coordinates of both the endpoints of the gap between two lines as an argument 
+ 	and returns a list with the gaps divided into gaps of length 100
+
+	Input Arguments:
+	---
+	`Gaps` :	[ list of tuples ]
+			list of tuple containing coordinates of start and end of a gap
+	Returns:
+	---
+	`Gaps` : [ list of tuple ]
+			list of tuple containing gaps divided into length of 100
+	
+	Example call:
+	---
+	Lines[line]=break_down(l)
+	"""
+    for l in Gaps:
         if(l[1]-l[0]>120):
             a=l[0]+100
-            Lines.append((l[0],a))
+            Gaps.append((l[0],a))
             while(a+84<l[1]):
-                Lines.append((a,a+100))
+                Gaps.append((a,a+100))
                 a=a+100
-            Lines.remove(l)
-    return Lines
+            Gaps.remove(l)
+    return Gaps
     
 def label_missing_vertical_lines(Lines):
+    
+    """
+	Purpose:
+	---
+	This function takes the set of missing lines in all the columns as an argument 
+ 	and returns a list with the labelled missing lines
+
+	Input Arguments:
+	---
+	`Lines` :	[ dictionary ]
+			dictionary containing x coordinates as keys and list of tuples(coordinates) of gaps as values
+	Returns:
+	---
+	`ans` : [ list of strings ]
+			list of all the missing lines labelled
+	
+	Example call:
+	---
+	ans=label_missing_vertical_lines(Lines)
+	"""
     ans=[]
-    for line,gap in Lines.items():
-        for g in gap:
-            s1=label_nodes((line,g[0]+10))
-            s2=label_nodes((line,g[1]+10))
+    for column,missing_lines in Lines.items():
+        for g in missing_lines:
+            s1=label_nodes((column,g[0]+10))
+            s2=label_nodes((column,g[1]+10))
             s=s1+'-'+s2
             ans.append(s)
     return ans
     
 def  label_missing_horizontal_lines(Lines):
+    
+    """
+	Purpose:
+	---
+	This function takes the set of missing lines in all the columns as an argument 
+ 	and returns a list with the labelled missing lines
+
+	Input Arguments:
+	---
+	`Lines` :	[ dictionary ]
+			dictionary containing y coordinates as keys and list of tuples(coordinates) of gaps as values
+	Returns:
+	---
+	`ans` : [ list of tuple ]
+			list of all the missing lines labelled
+	
+	Example call:
+	---
+	ans=label_missing_horizontal_lines(Lines)
+	"""
     ans=[]
-    for line,gap in Lines.items():
-        for g in gap:
-            s1=label_nodes((g[0],line+10))
-            s2=label_nodes((g[1],line+10))
+    for row,missing_lines in Lines.items():
+        for g in missing_lines:
+            s1=label_nodes((g[0],row+10))
+            s2=label_nodes((g[1],row+10))
             s=s1+'-'+s2
             ans.append(s)
     return ans
             
     
 def get_road_points_horizontal(Lines):
+    
+    """
+	Purpose:
+	---
+	This function takes the set of gaps in all the rows as an argument 
+ 	and returns a sorted list with all the missing lines
+
+	Input Arguments:
+	---
+	`Lines` :	[ dictionary ]
+			dictionary containing x coordinates as keys and list of tuples(coordinates) of gaps as values
+	Returns:
+	---
+	`ans` : [ list of strings ]
+			list of names of all the missing lines
+	
+	Example call:
+	---
+	horizontal_roads_under_construction=get_road_points_horizontal(sets_of_lines)
+	"""
     ans=[]
     for line,gap in Lines.items():
         gap.sort()
@@ -123,6 +244,26 @@ def get_road_points_horizontal(Lines):
     
     
 def get_road_points_vertical(Lines):
+    
+    """
+	Purpose:
+	---
+	This function takes the set of gaps in all the columns as an argument 
+ 	and returns a sorted list with all the missing lines
+
+	Input Arguments:
+	---
+	`Lines` :	[ dictionary ]
+			dictionary containing y coordinates as keys and list of tuples(coordinates) of gaps as values
+	Returns:
+	---
+	`ans` : [ list of strings ]
+			list of names of all the missing lines
+	
+	Example call:
+	---
+	vertical_roads_under_construction=get_road_points_vertical(sets_of_lines)
+	"""
     ans=[]
     for line,gap in Lines.items():
         gap.sort()
@@ -235,11 +376,17 @@ def detect_horizontal_roads_under_construction(maze_image):
 	detect_horizontal = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
 	cnts = cv2.findContours(detect_horizontal, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+
+	# Form a dictionary of lines that have missing parts
 	sets_of_lines={}
 	for c in cnts:
+    
+		# If any part of a line is missing add it to sets_of_line with key value as the y coordinate of the entire line
 		if(cv2.arcLength(c, True)<1200):
 			sets_of_lines.setdefault(c[0][0][1], [])
 			sets_of_lines[c[0][0][1]].append((c[0][0][0],c[3][0][0]))
+
+	# Get the labelled missing parts
 	horizontal_roads_under_construction=get_road_points_horizontal(sets_of_lines)
 	##################################################
 	
@@ -278,11 +425,17 @@ def detect_vertical_roads_under_construction(maze_image):
 	detect_vertical = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, vertical_kernel, iterations=2)
 	cnts = cv2.findContours(detect_vertical, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+ 
+	# Form a dictionary of lines that have missing parts
 	sets_of_lines={}
 	for c in cnts:
+		
+		# If any part of a line is missing add it to sets_of_line with key value as the x coordinate of the entire line
 		if(cv2.arcLength(c, True)<1200):
 			sets_of_lines.setdefault(c[0][0][0], [])
 			sets_of_lines[c[0][0][0]].append((c[0][0][1],c[1][0][1]))
+   
+	# Get the labelled missing parts
 	vertical_roads_under_construction=get_road_points_vertical(sets_of_lines)
 	##################################################
 	
