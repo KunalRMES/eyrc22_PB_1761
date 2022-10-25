@@ -94,8 +94,8 @@ def  label_missing_horizontal_lines(Lines):
     ans=[]
     for line,gap in Lines.items():
         for g in gap:
-            s1=label_nodes((g[0],line))
-            s2=label_nodes((g[1],line))
+            s1=label_nodes((g[0],line+10))
+            s2=label_nodes((g[1],line+10))
             s=s1+'-'+s2
             ans.append(s)
     return ans
@@ -336,55 +336,6 @@ def detect_medicine_packages(maze_image):
 	# here we are ignoring first coutours because
 	# findcontour function detects whole image as shape
 	contours =  contours[1:]
-	'''
-	# convert to hsv colorspace for color detection
-	image_rgb = cv2.cvtColor(maze_image, cv2.COLOR_BGR2RGB)
-	
-	hsv = cv2.cvtColor(maze_image, cv2.COLOR_BGR2HSV)
-	cv2.imshow("HSV",hsv)
-	'''
-	#define kernel size  
-	kernel = np.ones((7,7),np.uint8)
-	
-	# lower bound and upper bound for Green color
-	g_lower_bound = np.array([0, 250, 0])   
-	g_upper_bound = np.array([5, 255, 5])
-	green_mask = cv2.inRange(maze_image, g_lower_bound, g_upper_bound)
-	# Remove unnecessary noise from mask
-	green_mask = cv2.morphologyEx(green_mask, cv2.MORPH_CLOSE, kernel)
-	green_mask = cv2.morphologyEx(green_mask, cv2.MORPH_OPEN, kernel)
-	g_segmented_img = cv2.bitwise_and(maze_image, maze_image, mask=green_mask)
-	#cv2.imshow("Green",g_segmented_img)
- 
-	# lower bound and upper bound for Sky Blue color
-	sb_lower_bound = np.array([250, 250, 0])   
-	sb_upper_bound = np.array([255, 255, 5])
-	skyblue_mask = cv2.inRange(maze_image, sb_lower_bound, sb_upper_bound)
-	# Remove unnecessary noise from mask
-	skyblue_mask = cv2.morphologyEx(skyblue_mask, cv2.MORPH_CLOSE, kernel)
-	skyblue_mask = cv2.morphologyEx(skyblue_mask, cv2.MORPH_OPEN, kernel)
-	sb_segmented_img = cv2.bitwise_and(maze_image, maze_image, mask=skyblue_mask)
-	#cv2.imshow("Sky Blue",sb_segmented_img)
-	
-	# lower bound and upper bound for Orange color
-	p_lower_bound = np.array([100, 0, 250])   
-	p_upper_bound = np.array([200, 10, 255])
-	pink_mask = cv2.inRange(maze_image, p_lower_bound, p_upper_bound)
-	# Remove unnecessary noise from mask
-	pink_mask = cv2.morphologyEx(pink_mask, cv2.MORPH_CLOSE, kernel)
-	pink_mask = cv2.morphologyEx(pink_mask, cv2.MORPH_OPEN, kernel)
-	p_segmented_img = cv2.bitwise_and(maze_image, maze_image, mask=pink_mask)
-	#cv2.imshow("Pink",p_segmented_img)
- 
-	# lower bound and upper bound for Orange color
-	o_lower_bound = np.array([0, 100, 250])   
-	o_upper_bound = np.array([5, 130, 255])
-	orange_mask = cv2.inRange(maze_image, o_lower_bound, o_upper_bound)
-	# Remove unnecessary noise from mask
-	orange_mask = cv2.morphologyEx(orange_mask, cv2.MORPH_CLOSE, kernel)
-	orange_mask = cv2.morphologyEx(orange_mask, cv2.MORPH_OPEN, kernel)
-	o_segmented_img = cv2.bitwise_and(maze_image, maze_image, mask=orange_mask)
-	#cv2.imshow("Orange",o_segmented_img)
 	
 	# Putting Values into list
 	for contour in contours:   
@@ -419,30 +370,20 @@ def detect_medicine_packages(maze_image):
   
 		# finding color
 		color=""
-		if(p_segmented_img[x,y].any()):
-			color="Pink"
-		elif(o_segmented_img[x,y].any()):
-			color="Orange"
-		elif(sb_segmented_img[x,y].any()):
-			color="Skyblue"
-		elif(g_segmented_img[x,y].any()):
-			color="Green"
-		'''
-		b, g, r= maze_image[x, y]
-		color = str((b,g,r))
+		b, g, r= maze_image[y, x]
 		# for sky blue 
 		if ((b>250) & (g>250) & (r<5)):
 			color="Skyblue"
 		# for pink 
 		elif ((b<5) & (g<150) & (r>250)):
-			color="Pink"
+			color="Orange"
 		# for orange
 		elif ((b<200) & (g<5) & (r>250)):
-			color="Orange"
+			color="Pink"
 		# for green 
 		elif ((b<5) & (g>250) & (r<5)):
 			color="Green"
-		'''
+		
 		# finding shop number
 		shop=get_shop(t)
 
