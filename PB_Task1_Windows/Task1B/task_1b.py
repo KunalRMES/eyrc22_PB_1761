@@ -35,7 +35,10 @@ from pyzbar import pyzbar
 ##############################################################
 
 ################# ADD UTILITY FUNCTIONS HERE #################
-
+def getAngle(a, b, c):
+    ang = math.degrees(math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(a[1] - b[1], a[0] - b[0]))
+    return ang 
+#+ 360 if ang < 0 else ang
 
 
 
@@ -67,7 +70,14 @@ def detect_Qr_details(image):
     Qr_codes_details = {}
 
     ##############	ADD YOUR CODE HERE	##############
-    
+    qr_detail=pyzbar.decode(image)
+    for qr in qr_detail:
+        message = (qr.data).decode()
+        c1, c2, c3, c4 = qr.polygon
+        cx = (c1.x + c2.x + c3.x + c4.x)/4
+        cy = (c1.y + c2.y + c3.y + c4.y)/4
+        centroid=(int(cx),int(cy))
+        Qr_codes_details[message]=centroid
     ##################################################
     
     return Qr_codes_details    
@@ -101,7 +111,29 @@ def detect_ArUco_details(image):
     ArUco_corners = {}
     
     ##############	ADD YOUR CODE HERE	##############
-   
+    marker_dict = cv2.aruco.Dictionary_get(aruco.DICT_5X5_1000)
+    
+    param_markers = cv2.aruco.DetectorParameters_create()
+    
+    gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    
+    marker_corners, marker_ids, _ = cv2.aruco.detectMarkers(gray,marker_dict,parameters=param_markers)
+    for (a,b) in zip(marker_corners,marker_ids):
+        centerW = float(a[0][2][0] - a[0][0][0]) / float(2) + float(a[0][0][0])
+        centerH = float(a[0][2][1] - a[0][0][1]) / float(2) + float(a[0][0][1])
+        center = [int(centerW), int(centerH)]
+        x=(a[0][0][0]+a[0][1][0])/2
+        y=(a[0][0][1]+a[0][1][1])/2
+        angle=-int(math.degrees(math.atan2(y-center[1],x-center[0]))+90)
+        if(abs(angle)>180):
+            if(angle<0):
+                angle=360+angle
+            else:
+                angle=360-angle
+        
+        ArUco_details_dict[int(b)]=[center,int(angle)]
+        ArUco_corners[int(b)]=[[a[0][0][0],a[0][0][1]],[a[0][1][0],a[0][1][1]],[a[0][2][0],a[0][2][1]],[a[0][3][0],a[0][3][1]]]
+    
     ##################################################
     
     return ArUco_details_dict, ArUco_corners 
