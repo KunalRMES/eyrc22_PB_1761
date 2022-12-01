@@ -16,7 +16,7 @@
 '''
 
 # Team ID:			eYRC#PB#1761
-# Author List:		
+# Author List:		Kunal Patil
 # Filename:			task_1a.py
 # Functions:		detect_traffic_signals, detect_horizontal_roads_under_construction, detect_vertical_roads_under_construction,
 #					detect_medicine_packages, detect_arena_parameters
