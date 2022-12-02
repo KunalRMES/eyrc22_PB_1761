@@ -15,8 +15,8 @@
 *****************************************************************************************
 '''
 
-# Team ID:			[ Team-ID ]
-# Author List:		[ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
+# Team ID:			eYRC##1761
+# Author List:		Kunal Patil
 # Filename:			task_1b.py
 # Functions:		detect_Qr_details, detect_ArUco_details
 # 					[ Comma separated list of functions in this file ]
@@ -77,7 +77,7 @@ def detect_Qr_details(image):
         c1, c2, c3, c4 = qr.polygon
         cx = (c1.x + c2.x + c3.x + c4.x)/4
         cy = (c1.y + c2.y + c3.y + c4.y)/4
-        centroid=(int(cx),int(cy))
+        centroid=[int(cx),int(cy)]
         
         #Store into the dictionary with message as key and center coordinates as value
         Qr_codes_details[message]=centroid
@@ -114,6 +114,7 @@ def detect_ArUco_details(image):
     ArUco_corners = {}
     
     ##############	ADD YOUR CODE HERE	##############
+    
     marker_dict = cv2.aruco.Dictionary_get(aruco.DICT_5X5_1000)
     
     param_markers = cv2.aruco.DetectorParameters_create()
@@ -145,11 +146,11 @@ def detect_ArUco_details(image):
         
         #Store corners in a dictionary
         ArUco_corners[int(b)]=[[a[0][0][0],a[0][0][1]],[a[0][1][0],a[0][1][1]],[a[0][2][0],a[0][2][1]],[a[0][3][0],a[0][3][1]]]
-        
+    
     #Sort the Details dictionary by Keys
     for i in sorted(ArUco_details):
         ArUco_details_dict[i]=ArUco_details[i]
-        
+    
     ##################################################
     
     return ArUco_details_dict, ArUco_corners 
